@@ -3,7 +3,6 @@ import { PropsWithChildren } from "react";
 import { HomeNavbar } from "../components/home-navbar";
 import { HomeSidebar } from "../components/home-sidebar";
 
-interface HomeLayout {}
 export const HomeLayout = ({ children }: PropsWithChildren) => {
   return (
     <SidebarProvider>
