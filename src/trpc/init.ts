@@ -29,12 +29,11 @@ export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 
-
 export const protectProcedure = t.procedure.use(async function isAuthed(opts) {
   const { ctx } = opts;
   if (!ctx.clerkUserId) {
     throw new TRPCError({
-      message: "Not authorized User",
+      message: "No clerkUserId found",
       code: "UNAUTHORIZED",
     });
   }
@@ -42,22 +41,27 @@ export const protectProcedure = t.procedure.use(async function isAuthed(opts) {
     .select()
     .from(users)
     .where(eq(users.clerkId, ctx.clerkUserId));
-  
+
   if (!user) {
-    throw new TRPCError({message: "Not authorized user", code: "UNAUTHORIZED"})
+    throw new TRPCError({
+      message: "No user in database",
+      code: "UNAUTHORIZED",
+    });
   }
 
+  const { success } = await ratelimit.limit(user.id);
 
-  const { success } = await ratelimit.limit(user.id)
-  
   if (!success) {
-    throw new TRPCError({message: "Too many request", code: "TOO_MANY_REQUESTS"})
+    throw new TRPCError({
+      message: "Too many request",
+      code: "TOO_MANY_REQUESTS",
+    });
   }
 
   return opts.next({
     ctx: {
       ...ctx,
-      user
+      user,
     },
   });
 });

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { TRPCProvider } from "@/trpc/client";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,11 +18,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider afterSignOutUrl={'/'}>
+    <ClerkProvider afterSignOutUrl={"/"}>
       <html lang="en">
         <body className={`${inter.className} antialiased`}>
           <TRPCProvider>
-          {children}
+            <Toaster />
+            {children}
           </TRPCProvider>
         </body>
       </html>
