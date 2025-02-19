@@ -40,9 +40,9 @@ const VideoSectionSuspense = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="pl-6 w-[510px]">Video</TableHead>
-              <TableHead className="pl-6">Visibity</TableHead>
-              <TableHead className="pl-6">status</TableHead>
-              <TableHead className="pl-6">Date</TableHead>
+              <TableHead className="">Visibity</TableHead>
+              <TableHead className="">status</TableHead>
+              <TableHead className="">Date</TableHead>
               <TableHead className="text-right ">Views</TableHead>
               <TableHead className="text-right ">Comments</TableHead>
               <TableHead className="text-right pr-6">Likes</TableHead>

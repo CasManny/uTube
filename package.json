@@ -4,15 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:webhook\"",
     "build": "next build",
     "start": "next start",
     "db:push": "npx drizzle-kit push",
     "db:studio": "npx drizzle-kit studio",
+    "dev:webhook": "ngrok http --url=https://hagfish-holy-arguably.ngrok-free.app 3000",
     "lint": "next lint"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.11.2",
     "@hookform/resolvers": "^4.0.0",
+    "@mux/mux-node": "^9.0.1",
+    "@mux/mux-uploader-react": "^1.1.2",
     "@neondatabase/serverless": "^0.10.4",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -51,6 +55,7 @@
     "client-only": "^0.0.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "concurrently": "^9.1.2",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.39.3",
