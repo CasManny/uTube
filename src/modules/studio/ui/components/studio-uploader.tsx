@@ -19,6 +19,7 @@ export const StudioUploader = ({
   return (
     <div className="">
       <MuxUploader
+        onSuccess={onSuccess}
         className="hidden group/uploader"
         endpoint={endpoint}
         id={UPLOADER_ID}

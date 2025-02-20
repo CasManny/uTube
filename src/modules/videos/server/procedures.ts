@@ -4,25 +4,38 @@ import { mux } from "@/lib/mux";
 import { createTRPCRouter, protectProcedure } from "@/trpc/init";
 
 export const videosRouter = createTRPCRouter({
-    create: protectProcedure.mutation(async ({ ctx }) => {
-        const { id: userId } = ctx.user
-        const upload = await mux.video.uploads.create({
-            new_asset_settings: {
-                passthrough: userId,
-                playback_policy: ['public'],
-            },
-            cors_origin: '*'
-        })
-        const [ video ] = await db.insert(videos).values({
-            userId, 
-            title: "untitled",
-            muxStatus: 'waiting',
-            muxUploadId: upload.id
-        }).returning()
+  create: protectProcedure.mutation(async ({ ctx }) => {
+    const { id: userId } = ctx.user;
+    const upload = await mux.video.uploads.create({
+      new_asset_settings: {
+        passthrough: userId,
+        playback_policy: ["public"],
+        input: [
+          {
+            generated_subtitles: [
+              {
+                language_code: "en",
+                name: "English",
+              },
+            ],
+          },
+        ],
+      },
+      cors_origin: "*",
+    });
+    const [video] = await db
+      .insert(videos)
+      .values({
+        userId,
+        title: "untitled",
+        muxStatus: "waiting",
+        muxUploadId: upload.id,
+      })
+      .returning();
 
-        return {
-            video,
-            url: upload.url,
-        }
-    })
-})
+    return {
+      video,
+      url: upload.url,
+    };
+  }),
+});
