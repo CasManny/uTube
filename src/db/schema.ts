@@ -8,6 +8,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema, createUpdateSchema } from 'drizzle-zod'
 
 const createdAt = timestamp("created_at").defaultNow().notNull();
 const updatedAt = timestamp("updated_at").defaultNow().notNull();
@@ -54,7 +55,7 @@ export const videos = pgTable("videos", {
       onDelete: "cascade",
     })
     .notNull(),
-  descripton: text("description"),
+  description: text("description"),
   muxStatus: text("mux_status"),
   muxAssetId: text("mux_asset_id").unique(),
   muxUploadId: text("mux_upload_id").unique(),
@@ -71,6 +72,10 @@ export const videos = pgTable("videos", {
   createdAt,
   updatedAt,
 });
+
+export const videoInsertSchema = createInsertSchema(videos)
+export const vidoeUpdateSchema = createUpdateSchema(videos)
+export const videoSelectSchema = createSelectSchema(videos)
 
 export const videoRelations = relations(videos, ({ one }) => ({
   user: one(users, {
