@@ -64,7 +64,9 @@ export const videos = pgTable("videos", {
   muxTrackStatus: text("mux_track_status"),
   visibility: videoVisibility('visibility').default('private').notNull(),
   thumbnailUrl: text("thumbnail_url"),
+  thumbnailKey: text("thumbnail_key"),
   previewUrl: text("preview_url"),
+  previewKey: text('preview_key'),
   duration: integer('duration'),
   categoryId: uuid("category_id").references(() => categories.id, {
     onDelete: "set null",
