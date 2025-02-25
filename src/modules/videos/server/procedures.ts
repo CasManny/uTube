@@ -150,14 +150,15 @@ export const videosRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string(),
+        prompt: z.string().min(10),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const { id: userId } = ctx.user;
-      const { videoId } = input;
+      const { videoId, prompt } = input;
       const { workflowRunId } = await workflow.trigger({
-        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/webhooks/videos/workflows/title`,
-        body: { userId, videoId },
+        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/webhooks/videos/workflows/prompt`,
+        body: { userId, videoId, prompt },
       });
 
       return workflowRunId;
