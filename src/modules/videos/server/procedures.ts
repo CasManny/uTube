@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { videos, vidoeUpdateSchema } from "@/db/schema";
 import { mux } from "@/lib/mux";
+import { workflow } from "@/lib/workflow";
 import { createTRPCRouter, protectProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -99,7 +100,7 @@ export const videosRouter = createTRPCRouter({
         .select()
         .from(videos)
         .where(and(eq(videos.id, input.videoId), eq(videos.userId, userId)));
-      
+
       if (!existingVideo) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
@@ -123,14 +124,16 @@ export const videosRouter = createTRPCRouter({
       const tempThumbnailUrl = `https://image.mux.com/${existingVideo.muxPlaybackId}/thumbnail.jpg`;
 
       const utApi = new UTApi();
-      const uploadedThumbnail = await utApi.uploadFilesFromUrl(tempThumbnailUrl)
+      const uploadedThumbnail = await utApi.uploadFilesFromUrl(
+        tempThumbnailUrl
+      );
       if (!uploadedThumbnail.data) {
-        throw new TRPCError({code: "INTERNAL_SERVER_ERROR"})
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       }
 
-      const { key: thumbnailKey, ufsUrl: thumbnailUrl} = uploadedThumbnail.data
+      const { key: thumbnailKey, ufsUrl: thumbnailUrl } =
+        uploadedThumbnail.data;
 
-      
       const [updatedVideo] = await db
         .update(videos)
         .set({
@@ -141,5 +144,56 @@ export const videosRouter = createTRPCRouter({
         .returning();
 
       return updatedVideo;
+    }),
+
+  generateThumbnail: protectProcedure
+    .input(
+      z.object({
+        videoId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { id: userId } = ctx.user;
+      const { videoId } = input;
+      const { workflowRunId } = await workflow.trigger({
+        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/webhooks/videos/workflows/title`,
+        body: { userId, videoId },
+      });
+
+      return workflowRunId;
+    }),
+  generateTitle: protectProcedure
+    .input(
+      z.object({
+        videoId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+      const { videoId } = input;
+
+      const { workflowRunId } = await workflow.trigger({
+        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/webhooks/videos/workflows/title`,
+        body: { userId, videoId },
+      });
+
+      return workflowRunId;
+    }),
+  generateDescription: protectProcedure
+    .input(
+      z.object({
+        videoId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id: userId } = ctx.user;
+      const { videoId } = input;
+
+      const { workflowRunId } = await workflow.trigger({
+        url: `${process.env.UPSTASH_WORKFLOW_URL}/api/webhooks/videos/workflows/description`,
+        body: { userId, videoId },
+      });
+
+      return workflowRunId;
     }),
 });

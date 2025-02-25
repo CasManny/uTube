@@ -14,10 +14,12 @@ import {
   CopyIcon,
   Globe2Icon,
   ImagePlusIcon,
+  Loader2,
   LockIcon,
   MoreVertical,
   MoreVerticalIcon,
   RotateCcwIcon,
+  Sparkles,
   SparklesIcon,
   TrashIcon,
 } from "lucide-react";
@@ -112,6 +114,35 @@ const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
     },
   });
 
+  const generateThumbnail = trpc.vidoes.generateThumbnail.useMutation({
+    onSuccess: () => {
+      toast.success("Background Job started", {
+        description: "This may tak som time",
+      });
+    },
+  });
+
+  const generateTitle = trpc.vidoes.generateTitle.useMutation({
+    onSuccess: () => {
+      toast.success("Background job created", {
+        description: "This will take some time",
+      });
+    },
+    onError: () => {
+      toast.error("Something happened");
+    },
+  });
+  const generateDescription = trpc.vidoes.generateDescription.useMutation({
+    onSuccess: () => {
+      toast.success("Background job created", {
+        description: "This will take some time",
+      });
+    },
+    onError: () => {
+      toast.error("Something happened");
+    },
+  });
+
   const form = useForm<z.infer<typeof vidoeUpdateSchema>>({
     resolver: zodResolver(vidoeUpdateSchema),
     defaultValues: video,
@@ -173,8 +204,8 @@ const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    {/* { TODO: ADD AI GENERATE BUTTON} */}
+                    <FormLabel></FormLabel>
+
                     <FormControl>
                       <Input
                         placeholder="Add a title to your video"
@@ -190,7 +221,27 @@ const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>
+                      <div className="flex items-center gap-x-2">
+                        Description
+                        <Button
+                          className="rounded-full size-6 [&_svg]:size-3"
+                          size={"icon"}
+                          variant={"outline"}
+                          type="button"
+                          onClick={() =>
+                            generateDescription.mutate({ videoId })
+                          }
+                          disabled={generateDescription.isPending || !video.muxTrackId}
+                        >
+                          {generateDescription.isPending ? (
+                            <Loader2 className="animate-spin" />
+                          ) : (
+                            <Sparkles />
+                          )}
+                        </Button>
+                      </div>
+                    </FormLabel>
                     {/* { TODO: ADD AI GENERATE BUTTON} */}
                     <FormControl>
                       <Textarea
@@ -238,7 +289,11 @@ const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                               <ImagePlusIcon className="size-4 mr-1" />
                               Change
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                generateThumbnail.mutate({ videoId })
+                              }
+                            >
                               <SparklesIcon className="size-4 mr-1" />
                               AI-generated
                             </DropdownMenuItem>
