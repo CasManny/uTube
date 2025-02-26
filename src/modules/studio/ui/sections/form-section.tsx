@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { vidoeUpdateSchema } from "@/db/schema";
 import { snakeCaseToTitle } from "@/lib/utils";
@@ -53,8 +55,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { ThumbnailGenerateModal } from "../components/thumbnail-generate-modal";
 import { ThumbnailUploadModal } from "../components/thumbnail-upload-modal";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
 
 interface FormSectionProps {
   videoId: string;
@@ -118,7 +118,7 @@ const FormSectionSkeleton = () => {
         </div>
       </div>
     </div>
-  )
+  );
 };
 
 const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
@@ -226,7 +226,10 @@ const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
               </p>
             </div>
             <div className="flex items-center gap-x-2">
-              <Button type="submit" disabled={update.isPending}>
+              <Button
+                type="submit"
+                disabled={update.isPending || !form.formState.isDirty}
+              >
                 Save
               </Button>
               <DropdownMenu>
@@ -254,8 +257,7 @@ const FormSectionSuspense = ({ videoId }: FormSectionProps) => {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel></FormLabel>
-
+                    <FormLabel>Title</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Add a title to your video"
