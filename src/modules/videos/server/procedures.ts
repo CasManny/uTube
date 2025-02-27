@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users, videos, vidoeUpdateSchema } from "@/db/schema";
+import { users, videos, videoViews, vidoeUpdateSchema } from "@/db/schema";
 import { mux } from "@/lib/mux";
 import { workflow } from "@/lib/workflow";
 import { baseProcedure, createTRPCRouter, protectProcedure } from "@/trpc/init";
@@ -203,13 +203,14 @@ export const videosRouter = createTRPCRouter({
         id: z.string().uuid(),
       })
     )
-    .query(async ({input }) => {
+    .query(async ({ input }) => {
       const [existingVideo] = await db
         .select({
-          ...getTableColumns(videos), 
+          ...getTableColumns(videos),
           user: {
-            ...getTableColumns(users)
-          }
+            ...getTableColumns(users),
+          },
+          viewCount: db.$count(videoViews, eq(videoViews.videoId, videos.id)),
         })
         .from(videos)
         .where(eq(videos.id, input.id))
