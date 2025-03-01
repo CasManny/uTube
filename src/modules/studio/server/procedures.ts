@@ -20,12 +20,12 @@ export const studioRouter = createTRPCRouter({
         .select()
         .from(videos)
         .where(and(eq(videos.id, videoId), eq(videos.userId, userId)));
-      
+
       if (!video) {
-        throw new TRPCError({message: "No video found", code: "NOT_FOUND"})
+        throw new TRPCError({ message: "No video found", code: "NOT_FOUND" });
       }
 
-      return video
+      return video;
     }),
   getMany: protectProcedure
     .input(
