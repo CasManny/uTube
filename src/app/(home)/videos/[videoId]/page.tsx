@@ -7,6 +7,7 @@ interface VideoIdPageProps {
 const videoIdPage = async ({ params }: VideoIdPageProps) => {
   const { videoId } = await params;
   void trpc.vidoes.getOne.prefetch({ id: videoId });
+  void trpc.comments.getMany.prefetch({ videoId });
   return (
     <HydrateClient>
       <VideoView videoId={videoId} />

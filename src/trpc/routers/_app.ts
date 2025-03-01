@@ -5,9 +5,11 @@ import { videosRouter } from "@/modules/videos/server/procedures";
 import { videoViewsRouter } from "@/modules/video-views/server/procedures";
 import { videoReactionsRouter } from "@/modules/video-reactions/server/procedures";
 import { subcriptionRouter } from "@/modules/subcriptions/server/procedures";
+import { commentsRouter } from "@/modules/comments/server/procedures";
 export const appRouter = createTRPCRouter({
   studio: studioRouter,
   vidoes: videosRouter,
+  comments: commentsRouter,
   videoViews: videoViewsRouter,
   categories: categoriesRouter,
   subcriptions: subcriptionRouter,
