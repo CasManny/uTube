@@ -10,28 +10,60 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MessageSquareIcon, MoreVerticalIcon, Trash2Icon } from "lucide-react";
+import {
+  MessageSquareIcon,
+  MoreVerticalIcon,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2Icon,
+} from "lucide-react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 interface CommentItemProps {
   comment: CommentsGetManyOutput["items"][number];
 }
 export const CommentItem = ({ comment }: CommentItemProps) => {
   const { userId } = useAuth();
-  const clerk = useClerk()
+  const clerk = useClerk();
   const utils = trpc.useUtils();
   const remove = trpc.comments.remove.useMutation({
     onSuccess: () => {
-      toast.success("removed comment")
+      toast.success("removed comment");
       utils.comments.getMany.invalidate({ videoId: comment.videoId });
     },
     onError: (error) => {
-      toast.error("something went wrong")
-      if (error.data?.code === 'UNAUTHORIZED') {
-        clerk.openSignIn()
+      toast.error("something went wrong");
+      if (error.data?.code === "UNAUTHORIZED") {
+        clerk.openSignIn();
       }
-    }
+    },
   });
+  const like = trpc.commentReactions.like.useMutation({
+    onSuccess: () => {
+      toast.success("reaction added");
+      utils.comments.getMany.invalidate({videoId: comment.videoId})
+    },
+    onError: (error) => {
+      toast.error("something went wrong");
+      if (error.data?.code === "UNAUTHORIZED") {
+        clerk.openSignIn();
+      }
+    },
+  });
+  const dislike = trpc.commentReactions.dislike.useMutation({
+    onSuccess: () => {
+      toast.success("dislike reaction added");
+      utils.comments.getMany.invalidate({videoId: comment.videoId})
+    },
+    onError: (error) => {
+      toast.error("something went wrong");
+      if (error.data?.code === "UNAUTHORIZED") {
+        clerk.openSignIn();
+      }
+    },
+  });
+  const isPending = like.isPending || dislike.isPending
   return (
     <div className="">
       <div className="flex gap-4">
@@ -54,8 +86,44 @@ export const CommentItem = ({ comment }: CommentItemProps) => {
             </div>
           </Link>
           <p className="text-sm">{comment.value}</p>
+          <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center">
+              <Button
+                size={"icon"}
+                disabled={isPending}
+                variant={"ghost"}
+                className="size-8"
+                onClick={() => like.mutate({commentId: comment.id})}
+              >
+                <ThumbsUp
+                  className={cn(
+                    comment.viewReaction === "like" && "fill-black"
+                  )}
+                />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {comment.likeCount}
+              </span>
+              <Button
+                size={"icon"}
+                disabled={isPending}
+                variant={"ghost"}
+                className="size-8"
+                onClick={() => dislike.mutate({ commentId: comment.id})}
+              >
+                <ThumbsDown
+                  className={cn(
+                    comment.viewReaction === "dislike" && "fill-black"
+                  )}
+                />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {comment.dislikeCount}
+              </span>
+            </div>
+          </div>
         </div>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant={"ghost"} size={"icon"} className="size-8">
               <MoreVerticalIcon className="" />

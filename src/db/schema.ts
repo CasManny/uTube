@@ -17,6 +17,8 @@ import {
 
 const createdAt = timestamp("created_at").defaultNow().notNull();
 const updatedAt = timestamp("updated_at").defaultNow().notNull();
+export const reactionType = pgEnum("reaction_type", ["like", "dislike"]);
+
 
 export const users = pgTable(
   "users",
@@ -41,7 +43,8 @@ export const userRelations = relations(users, ({ many }) => ({
   subcribers: many(subcriptions, {
     relationName: "subcriptions_creator_id_fkey",
   }),
-  comments: many(comments)
+  comments: many(comments),
+  commentsReactions: many(commentReactions)
 }));
 
 export const categories = pgTable(
@@ -164,12 +167,35 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   video: one(videos, {
     fields: [comments.videoId],
     references: [videos.id]
-  })
+  }),
+  reactions: many(commentReactions)
 }))
 
 export const commentsSelectSchema = createSelectSchema(comments)
 export const commentsInsertSchema = createSelectSchema(comments)
 export const commentsUpdateSchema = createUpdateSchema(comments)
+
+export const commentReactions = pgTable('comment_reactions', {
+  userId: uuid('user_id').references(() => users.id, { onDelete: "cascade" }).notNull(),
+  commentId: uuid('comment_id').references(() => comments.id, { onDelete: "cascade" }).notNull(),
+  type: reactionType('type').notNull(),
+  createdAt,
+  updatedAt
+}, (t) => [primaryKey({
+  name: 'comment_reaction_pk',
+  columns: [t.userId, t.commentId]
+})])
+
+export const commentReactionRelations = relations(commentReactions, ({ one }) => ({
+  user: one(users, {
+    fields: [commentReactions.userId],
+    references: [users.id]
+  }),
+  comments: one(comments, {
+    fields: [commentReactions.commentId],
+    references: [comments.id]
+  })
+}))
 
 export const videoViews = pgTable(
   "video_views",
@@ -192,11 +218,11 @@ export const videoViews = pgTable(
 );
 
 export const videoViewRelations = relations(videoViews, ({ one }) => ({
-  users: one(users, {
+  user: one(users, {
     fields: [videoViews.userId],
     references: [users.id],
   }),
-  videos: one(videos, {
+  video: one(videos, {
     fields: [videoViews.videoId],
     references: [videos.id],
   }),
@@ -206,7 +232,6 @@ export const videoViewSelectSchema = createSelectSchema(videoViews);
 export const videoViewsInsertSchema = createInsertSchema(videoViews);
 export const videoViewUpdateSchema = createUpdateSchema(videoViews);
 
-export const reactionType = pgEnum("reaction_type", ["like", "dislike"]);
 
 export const videoReactions = pgTable(
   "video_reactions",
@@ -230,11 +255,11 @@ export const videoReactions = pgTable(
 );
 
 export const videoReactionsRelations = relations(videoReactions, ({ one }) => ({
-  users: one(users, {
+  user: one(users, {
     fields: [videoReactions.userId],
     references: [users.id],
   }),
-  videos: one(videos, {
+  video: one(videos, {
     fields: [videoReactions.videoId],
     references: [videos.id],
   }),

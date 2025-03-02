@@ -1,8 +1,22 @@
 import { db } from "@/db";
-import { comments, commentsInsertSchema, users } from "@/db/schema";
+import {
+  commentReactions,
+  comments,
+  commentsInsertSchema,
+  users,
+} from "@/db/schema";
 import { baseProcedure, createTRPCRouter, protectProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  inArray,
+  lt,
+  or,
+} from "drizzle-orm";
 import { z } from "zod";
 
 export const commentsRouter = createTRPCRouter({
@@ -42,6 +56,26 @@ export const commentsRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const { videoId, cursor, limit } = input;
+      const { clerkUserId } = ctx;
+      let userId;
+
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(inArray(users.clerkId, clerkUserId ? [clerkUserId] : []));
+      if (user) {
+        userId = user.id;
+      }
+
+      const viewerReactions = db.$with("viewer_reaction").as(
+        db
+          .select({
+            commentId: commentReactions.commentId,
+            type: commentReactions.type,
+          })
+          .from(commentReactions)
+          .where(inArray(commentReactions.userId, userId ? [userId] : []))
+      );
 
       const [totalData, data] = await Promise.all([
         db
@@ -52,12 +86,29 @@ export const commentsRouter = createTRPCRouter({
           .where(eq(comments.videoId, videoId)),
 
         db
+          .with(viewerReactions)
           .select({
             ...getTableColumns(comments),
             user: users,
+            viewReaction: viewerReactions.type,
+            likeCount: db.$count(
+              commentReactions,
+              and(
+                eq(commentReactions.type, "like"),
+                eq(commentReactions.commentId, comments.id)
+              )
+            ),
+            dislikeCount: db.$count(
+              commentReactions,
+              and(
+                eq(commentReactions.type, "dislike"),
+                eq(commentReactions.commentId, comments.id)
+              )
+            ),
           })
           .from(comments)
           .innerJoin(users, eq(comments.userId, users.id))
+          .leftJoin(viewerReactions, eq(comments.id, viewerReactions.commentId))
           .where(
             and(
               eq(comments.videoId, videoId),
@@ -106,13 +157,11 @@ export const commentsRouter = createTRPCRouter({
         .delete(comments)
         .where(and(eq(comments.userId, userId), eq(comments.id, commentId)))
         .returning();
-      
+
       if (!deletedComment) {
-        throw new TRPCError({code: 'NOT_FOUND'})
+        throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      return deletedComment
+      return deletedComment;
     }),
-  
-
 });
