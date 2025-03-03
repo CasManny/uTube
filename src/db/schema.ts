@@ -188,12 +188,12 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   parent: one(comments, {
     fields: [comments.parentId],
     references: [comments.id],
-    relationName: "comments_parent_id_fkey"
+    relationName: "comments_parent_id_fkey",
   }),
   reactions: many(commentReactions),
   replies: many(comments, {
-    relationName: "comments_parent_id_fkey"
-  })
+    relationName: "comments_parent_id_fkey",
+  }),
 }));
 
 export const commentsSelectSchema = createSelectSchema(comments);
@@ -305,3 +305,5 @@ export const videoReactionsRelations = relations(videoReactions, ({ one }) => ({
 export const videoReactionSelectSchema = createSelectSchema(videoReactions);
 export const videoReactionCreateSchema = createInsertSchema(videoReactions);
 export const videoReactionUpdateSchema = createUpdateSchema(videoReactions);
+
+
