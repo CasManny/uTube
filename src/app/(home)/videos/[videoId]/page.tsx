@@ -7,6 +7,10 @@ interface VideoIdPageProps {
 }
 const videoIdPage = async ({ params }: VideoIdPageProps) => {
   const { videoId } = await params;
+  void trpc.suggestions.getMany.prefetchInfinite({
+    videoId,
+    limit: DEFAULT_LIMIT
+  })
   void trpc.vidoes.getOne.prefetch({ id: videoId });
   void trpc.comments.getMany.prefetchInfinite({
     videoId,
