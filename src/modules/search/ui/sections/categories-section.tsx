@@ -5,6 +5,7 @@ import { ErrorBoundary } from "react-error-boundary";
 interface CategoriesSectionProps {
   categoryId: string | undefined;
 }
+
 export const CategoriesSection = ({ categoryId }: CategoriesSectionProps) => {
   return (
     <Suspense fallback={<CategoriesSectionSkeleton />}>
