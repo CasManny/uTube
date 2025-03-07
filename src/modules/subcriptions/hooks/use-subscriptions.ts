@@ -21,6 +21,7 @@ export const useSubscription = ({
       toast.success("subscribed");
       if (fromVideoId) {
         utils.vidoes.getOne.invalidate({ id: fromVideoId });
+        utils.vidoes.getManySubscribed.invalidate()
       }
     },
     onError: (error) => {
