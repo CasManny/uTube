@@ -1,6 +1,14 @@
 import { db } from "@/db";
-import { users, videoReactions, videos, videoViews } from "@/db/schema";
+import {
+  playlists,
+  playlistsVideos,
+  users,
+  videoReactions,
+  videos,
+  videoViews,
+} from "@/db/schema";
 import { createTRPCRouter, protectProcedure } from "@/trpc/init";
+import { TRPCError } from "@trpc/server";
 import { and, desc, eq, getTableColumns, lt, or } from "drizzle-orm";
 import { z } from "zod";
 
@@ -169,6 +177,84 @@ export const playlistsRouter = createTRPCRouter({
       const lastItem = items[items.length - 1];
       const nextCursor = hasMore
         ? { id: lastItem.id, likedAt: lastItem.likedAt }
+        : null;
+      return {
+        items,
+        nextCursor,
+      };
+    }),
+  create: protectProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { name } = input;
+      const { id: userId } = ctx.user;
+
+      const [createdPlaylist] = await db
+        .insert(playlists)
+        .values({
+          name,
+          userId,
+        })
+        .returning();
+
+      if (!createdPlaylist) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      }
+
+      return createdPlaylist;
+    }),
+  getMany: protectProcedure
+    .input(
+      z.object({
+        cursor: z
+          .object({
+            id: z.string().uuid(),
+            updatedAt: z.date(),
+          })
+          .nullish(),
+        limit: z.number().min(1).max(100),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { cursor, limit } = input;
+      const { id: userId } = ctx.user;
+
+      const data = await db
+        .select({
+          ...getTableColumns(playlists),
+          videoCount: db.$count(playlistsVideos, eq(playlistsVideos.playlistId, playlists.id)),
+          user: users
+        })
+        .from(playlists)
+        .where(
+          and(
+            eq(playlists.userId, userId),
+            cursor
+              ? or(
+                  lt(playlists.updatedAt, cursor.updatedAt),
+                  and(
+                    eq(playlists.updatedAt, cursor.updatedAt),
+                    lt(playlists.id, cursor.id)
+                  )
+                )
+              : undefined
+          )
+        )
+        .innerJoin(users, eq(playlists.userId, users.id))
+        .orderBy(desc(playlists.updatedAt), desc(videos.id))
+        .limit(limit + 1);
+
+      const hasMore = data.length > limit;
+      // remove the last time if there is more data
+      const items = hasMore ? data.slice(0, -1) : data;
+      // set the cursor to the last item if there is more data
+      const lastItem = items[items.length - 1];
+      const nextCursor = hasMore
+        ? { id: lastItem.id, updatedAt: lastItem.updatedAt }
         : null;
       return {
         items,
